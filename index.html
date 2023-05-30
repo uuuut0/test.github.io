@@ -1,51 +1,402 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
-    <head>
-        <script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
-        <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
-        <script src="https://raw.githack.com/donmccurdy/aframe-extras/master/dist/aframe-extras.loaders.min.js"></script>
-        <script src="https://raw.githack.com/AR-js-org/studio-backend/master/src/modules/marker/tools/gesture-detector.js"></script>
-        <script src="https://raw.githack.com/AR-js-org/studio-backend/master/src/modules/marker/tools/gesture-handler.js"></script>
-    </head>
 
-    <body style="margin: 0; overflow: hidden;">
-        <a-scene
-            vr-mode-ui="enabled: false;"
-            loading-screen="enabled: false;"
-            renderer="logarithmicDepthBuffer: true;"
-            arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;"
-            id="scene"
-            embedded
-            gesture-detector
-        >
-            <a-assets>
-                <a-asset-item
-                    id="animated-asset"
-                    src="assets/asset.gltf"
-                ></a-asset-item>
-            </a-assets>
+<head>
 
-            <a-marker
-                id="animated-marker"
-                type="pattern"
-                preset="custom"
-                url="assets/marker.patt"
-                raycaster="objects: .clickable"
-                emitevents="true"
-                cursor="fuse: false; rayOrigin: mouse;"
-                id="markerA"
-            >
-                <a-entity
-                    id="bowser-model"
-                    scale="1.2560842432780732 1.2560842432780732 1.2560842432780732"
-                    animation-mixer="loop: repeat"
-                    gltf-model="#animated-asset"
-                    class="clickable"
-                    gesture-handler
-                ></a-entity>
-            </a-marker>
+  <meta charset="UTF-8" name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>步行體驗計畫</title>
+  <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
 
-            <a-entity camera></a-entity>
-        </a-scene>
-    </body>
+      display: flex;
+      flex-direction: column;
+
+      /* background-color: #f8f4f4; */
+      background-image: url("bg-texture.jpg");
+      background-color: rgb(234, 234, 239);
+      background-blend-mode: multiply;
+      background-size: 100%;
+      background-repeat: repeat-y;
+
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 40px auto;
+      padding: 10px 25px;
+      background-color: rgb(232, 229, 229);
+      opacity: .7;
+    }
+
+    @media screen and (max-width: 600px) {
+      .container {
+        max-width: 400px;
+      }
+    }
+
+
+    h1 {
+      font-size: 9vw;
+      color: #151515;
+      position: relative;
+      z-index: 1;
+      margin-top: 0px;
+      margin: 0px ;
+      margin-left: 20px;
+      margin-right: 20px;
+
+    }
+
+    #title-2{
+      font-weight: 100;
+
+      font-size: 3vw;
+      color: #151515;
+      position: relative;
+      text-align: center;
+      margin: 0px 0px 0px 0px;
+      margin-top: 10px;
+      margin-bottom: 0px;
+
+    }
+
+    h2 {
+      font-size: 22px;
+      color: rgb(154, 154, 148);
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      /* 新增 */
+      /* background-color: rgb(52, 52, 52); */
+      background-image: url(title1.png);
+    }
+
+
+    .box-container {
+      position: relative;
+      display: flex;
+      justify-content: space-between;
+      background-color: rgb(210, 213, 210);
+      overflow: hidden;
+    }
+
+
+    .box {
+      width: 5vw;
+      height: 5vw;
+      background-color: rgb(212, 212, 40);
+      margin-right: 10px;
+      animation: boxAnimation 5s infinite linear;
+      /* 新增 */
+    }
+
+    .box2 {
+      width: 2vw;
+      height: 2vw;
+      background-color: rgb(217, 217, 7);
+      margin-left: 30px;
+      animation: box2Animation 3s infinite;
+      /* 新增 */
+    }
+
+   
+    @keyframes boxAnimation {
+            0% {
+                margin-right: 10px;
+            }
+
+            10% {
+                margin-right: 0px;
+            }
+
+            20% {
+                margin-right: -10px;
+            }
+
+            60% {
+                margin-right: -30px;
+            }
+
+            100% {
+                margin-right: 10px;
+            }
+        }
+
+        @keyframes box2Animation {
+            0% {
+                margin-left: 30px;
+            }
+
+            50% {
+                margin-left: -30px;
+            }
+
+            100% {
+                margin-left: 30px;
+            }
+        }
+    #map {
+      display: flex;
+      flex-wrap: wrap;
+      margin: 0 auto;
+      margin-bottom: 30px;
+      outline: solid black 2px;
+      width: 80%;
+      height: 580px
+    }
+
+    .tags {
+      float: left;
+      background-color: beige;
+      padding: 10px 50px;
+      margin: 10px 10px 10px 8px;
+
+      font-size: 28px;
+
+    }
+
+    .tags.selected {
+      float: left;
+      background-color: #e4c969;
+      padding: 10px 50px;
+      margin: 10px 10px 10px 8px;
+
+      font-size: 28px;
+
+    }
+
+    .tag-container {
+      display: flex;
+      /* justify-content: center; */
+      margin: 0 auto;
+      width: 80%;
+      outline: 2px solid black;
+    }
+
+    .intro {
+      display: flex;
+      margin-top: 30px;
+      margin-bottom: 40px;
+      background-color: rgb(178, 182, 181);
+    }
+
+    .intro p {
+      margin: 0 auto;
+      font-size: 23px;
+      padding-top: 50px;
+      padding-right: 80px;
+      line-height: 2;
+      /* outline: 1px solid black; */
+    }
+
+    .map-container {
+      display: block;
+      width: 100%;
+    }
+
+    .icon-arrow {
+      width: 20%;
+      margin-left: 40px;
+    }
+  </style>
+
+</head>
+
+<body>
+  <div class="container">
+
+    <div class="box-container">
+      <div class="box"></div>
+      <div class="box"></div>
+      <div class="box"></div>
+      <div class="box"></div>
+      <div class="box"></div>
+    </div>
+    <h1 id="title-2">@大直</h1>
+    <h1>步行體驗計畫</h1>
+
+    <div class="box-container">
+      <div class="box2"></div>
+      <div class="box2"></div>
+      <div class="box2"></div>
+      <div class="box2"></div>
+      <div class="box2"></div>
+      <div class="box2"></div>
+      <div class="box2"></div>
+      <div class="box2"></div>
+      <div class="box2"></div>
+
+    </div>
+
+  </div>
+
+  <div class="intro">
+    <img class="icon-arrow" src="downarrow0.png">
+    <p>
+      →紀錄大直生活圈居民的生活，繪製出它們一整天的活動路線→<br>
+      <br>
+      將一整天的活動切分成小段。<br>
+      每個路線片段，會在每日相應的時間更新在頁面上。<br>
+     </p>
+  </div>
+
+  <div class="tag-container">
+    <button class="tags" id="layer1Button" onclick="toggleLayer('layer1')">#life0001</button>
+    <button class="tags" id="layer2Button" onclick="toggleLayer('layer2')">#life0002</button>
+  </div>
+
+  <div class="map-container">
+    <div id="map"></div>
+  </div>
+  <script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
+  <script>
+
+    var locations = [
+      [25.0798652, 121.5474402],
+      [25.079369, 121.544984],
+      [25.082273, 121.544646],
+      [25.083027, 121.544712],
+      [25.068694, 121.567963]
+
+    ]
+
+
+
+    var map = L.map('map').setView([25.08193, 121.54564], 17)
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
+
+
+    var layer1 = L.layerGroup();
+    var layer2 = L.layerGroup();
+
+
+    var overlayLayers = {
+      '#life001': layer1,
+      '#life002': layer2
+    };
+
+    var layerControl = L.control.layers(null, overlayLayers).addTo(map);
+
+
+
+
+    L.popup()
+      .setLatLng([25.08193, 121.54564])
+      .setContent("點擊上方標籤，可以查看路線")
+      .openOn(map);
+
+
+    var southWest = L.latLng(locations[0]);
+    var northEast = L.latLng(locations[4]);
+    var bounds = L.latLngBounds(southWest, northEast);
+
+
+    function onMapClick(e) {
+      alert("經緯度座標：" + e.latlng+ "");
+    }
+
+    map.on('click', onMapClick);
+
+
+
+
+
+    var l01_p1 = [
+      [25.0794, 121.54504],
+      [25.07939, 121.54508],
+      [25.0797, 121.54506],
+      [25.07973, 121.54594],
+      [25.07972, 121.54599],
+      [25.0798, 121.5471],
+      [25.0798, 121.54712],
+      [25.07994, 121.54706],
+      [25.08008, 121.54697],
+      [25.08069, 121.54643],
+      [25.08072, 121.54642],
+      [25.08117, 121.5464],
+      [25.08185, 121.54637],
+      [25.08183, 121.54647],
+      [25.08181, 121.54655]
+    ]
+    var l02_p1 = [
+      [25.08245, 121.54702],
+      [25.08246, 121.54735],
+      [25.08254, 121.54736],
+      [25.08255, 121.54745],
+      [25.08263, 121.54742],
+      [25.08272, 121.54742]
+    ]
+
+
+    var polyline = L.polyline(l01_p1, { color: 'red' }).addTo(layer1);
+    var polyline2 = L.polyline(l02_p1, { color: 'orange' }).addTo(layer2);
+
+
+
+
+    var mapP101 = L.marker(l01_p1[0]).addTo(layer1);
+    mapP101.bindPopup("<b>住家</b><br>起床出門").openPopup();
+
+    var mapP102 = L.marker(l01_p1[l01_p1.length - 1]).addTo(layer1);
+    mapP102.bindPopup("<b>圖書館</b><br>看報紙").openPopup();
+
+
+    var mapP201 = L.marker(l02_p1[0]).addTo(layer2);
+    mapP201.bindPopup("<b>住家</b><br>起床出門").openPopup();
+
+    var mapP202 = L.marker(l02_p1[l02_p1.length - 1]).addTo(layer2);
+    mapP202.bindPopup("<b>大直公園</b><br>公園散步運動").openPopup();
+
+
+
+    var layer1Visible = false;
+    var layer2Visible = false;
+    function toggleLayer(layerName) {
+
+      if (layerName === 'layer1') {
+
+        if (layer1Visible) {
+          map.removeLayer(layer1);
+          layer1Visible = false;
+          console.log("pressed!")
+
+        } else {
+          map.addLayer(layer1);
+          layer1Visible = true;
+        }
+        toggleButtonStyle('layer1Button');
+      } else if (layerName === 'layer2') {
+        if (layer2Visible) {
+          map.removeLayer(layer2);
+          layer2Visible = false;
+        } else {
+          map.addLayer(layer2);
+          layer2Visible = true;
+        }
+        toggleButtonStyle('layer2Button');
+      }
+    }
+
+    function toggleButtonStyle(buttonId) {
+      var button = document.getElementById(buttonId);
+      button.classList.toggle('selected');
+    }
+
+
+
+  </script>
+
+
+
+
+</body>
+
 </html>
